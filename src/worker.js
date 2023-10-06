@@ -5,7 +5,6 @@ import * as Ably from 'ably/build/ably-webworker.min';
 const client = new Ably.Realtime.Promise({ authUrl: "/api", autoConnect: false });
 let channel = null;
 
-
 // Read some float32 pcm from the queue, convert to int16 pcm, and push it to
 // our global queue.
 
@@ -21,13 +20,16 @@ function readFromQueue() {
     segment[i] = Math.min(Math.max(this.staging[i], -1.0), 1.0) * (2 << 14 - 1);
   }
 
-  //DEVIN: We are not making PMC data right now.
+  //DEVIN: We are not going to make the wave so don't need the global queue
   //pcm.push(segment);
   
   //DEVIN
   //Do Ably websocket stuff here
   //Note that there is some kind of specific Ably Web Workers 
+  // We should be sending 
   console.log(`publishing ${segment}`)
+
+  //This is publishing interleaved int16 pcm data
   channel.publish('audio-segment',segment)
 
   return samples_read;

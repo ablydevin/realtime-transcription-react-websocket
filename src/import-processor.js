@@ -9,7 +9,7 @@ class Processor extends AudioWorkletProcessor {
   constructor(options) {
     super(options);
     this.interleaved = new Float32Array(128);
-    this.deinterleaved = new Float32Array(128);
+    //this.deinterleaved = new Float32Array(128);
     this.amp = 1.0;
     this.o = { index: 0, value: 0 };
     const { audioQueue, paramQueue } = options.processorOptions;
@@ -30,14 +30,14 @@ class Processor extends AudioWorkletProcessor {
     // read 128 frames from the queue, deinterleave, and write to output
     // buffers.
     this._audio_reader.dequeue(this.interleaved);
-    deinterleave(this.interleaved, this.deinterleaved);
+    //deinterleave(this.interleaved, this.deinterleaved);
     //do I have to deinterleave?
     //console.log(`dequeing ${this.interleaved.length}`)
 
     let logstring = ""
     for (let i = 0; i < 128; i++) {      
-      logstring = logstring + `,${this.deinterleaved[i]}`
-      outputs[0][0][i] = this.amp * this.deinterleaved[i];      
+      //logstring = logstring + `,${this.interleaved[i]}`
+      outputs[0][0][i] = this.amp * this.interleaved[i];      
     }
     console.log(logstring)
 

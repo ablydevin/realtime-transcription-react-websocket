@@ -15,34 +15,15 @@ function Subscriber() {
   let audioWriter = null;
   let paramWriter = null
 
-
-  // This is passed in an unsigned 16-bit integer array. It is converted to a 32-bit float array.
-  // The first startIndex items are skipped, and only 'length' number of items is converted.
-  function int16ToFloat32(inputArray, startIndex, length) {
-    var output = new Float32Array(inputArray.length-startIndex);
-    let o="";
-    let z="";
-    for (var i = startIndex; i < length; i++) {
-        z = z + `,${inputArray[i]}`
-        var int = inputArray[i];
-        // If the high bit is on, then it is a negative number, and actually counts backwards.
-        var float = (int >= 0x8000) ? -(0x10000 - int) / 0x8000 : int / 0x7FFF;
-        o = o + `,${float}`
-        output[i] = float;
-    }
-    console.log(z)
-    return output;
-  }
-
-  function convertBlock(buffer) { // incoming data is an ArrayBuffer
-    var incomingData = new Uint8Array(buffer); // create a uint8 view on the ArrayBuffer
-    var i, l = incomingData.length; // length, we need this for the loop
-    var outputData = new Float32Array(incomingData.length); // create the Float32Array for output
-    for (i = 0; i < l; i++) {
-        outputData[i] = (incomingData[i] - 128) / 128.0; // convert audio to float
-    }
-    return outputData; // return the Float32Array
-}
+  // function convertBlock(buffer) { // incoming data is an ArrayBuffer
+  //   var incomingData = new Uint8Array(buffer); // create a uint8 view on the ArrayBuffer
+  //   var i, l = incomingData.length; // length, we need this for the loop
+  //   var outputData = new Float32Array(incomingData.length); // create the Float32Array for output
+  //   for (i = 0; i < l; i++) {
+  //       outputData[i] = (incomingData[i] - 128) / 128.0; // convert audio to float
+  //   }
+  //   return outputData; // return the Float32Array
+  // }
 
   // runs real-time transcription and handles global variables
   async function run(e) {
@@ -82,20 +63,25 @@ function Subscriber() {
         if (audioContext.state === "suspended") {
           audioContext.resume();
         }
-        console.log(`received ${m.data.byteLength}`)
+        //console.log(`received ${m.data.byteLength}`)
 
         //does the export worker interleave before sending through the socket?
         // We should be getting PCM16 data in the subscribers
         //I think it needs to be converted to float16 before putting in the queue
         //m.data is an arrayBuffer
 
-        // Lets try converting the received data to Float32 so that the processor is only dealing with Float32
-        //let convertedData = int16ToFloat32(m.data, 0, m.data.byteLength)
-        let convertedData = convertBlock(m.data)
-        console.log(`${typeof(convertedData)}, ${convertedData.length}`)
-        //console.log(convertedData.length);
-        //console.log(JSON.stringify(convertedData));
-        audioWriter.enqueue(convertedData);
+        //INcoming data is an arraybuffer that I think contans Int16Array data (thats what the publisher converts to before pusblishing
+        var int16Array = new Int16Array(m.data, 0, Math.floor(m.data.byteLength / 2));
+
+        //Converting from arraybuffer to Float32Array gets us noise but not the mic sound
+        //The publisher interleaves the audio before sending it over the socket, do I need to deinterleave?
+        //let convertedBuffer = convertBlock(m.data)
+        let convertedBuffer = new Float32Array(int16Array.buffer);
+        console.log(`${convertedBuffer.toString()}, ${convertedBuffer.length}`)
+
+
+
+        audioWriter.enqueue(convertedBuffer);
       })
   
     });
